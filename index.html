@@ -3,137 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <title>Sorry I'm Busy</title>
+
 <style>
 body{
   margin:0;
   background:black;
-  color:white;
+  overflow:hidden;
   font-family:Helvetica, Arial, sans-serif;
-  text-align:center;
 }
-img{
+#scene{
   width:100vw;
   height:100vh;
   object-fit:cover;
 }
-.choices{
+#score{
   position:absolute;
-  bottom:40px;
-  width:100%;
-  display:flex;
-  justify-content:space-between;
-  padding:0 40px;
-  box-sizing:border-box;
-}
-button{
-  background:rgba(0,0,0,0.6);
-  border:2px solid white;
+  top:20px;
+  left:20px;
   color:white;
-  padding:15px 25px;
-  font-size:18px;
-  cursor:pointer;
+  font-size:20px;
 }
 </style>
 </head>
+
 <body>
 
+<div id="score">Score: 10</div>
 <img id="scene" src="SubwayEntrance.png">
-
-<div class="choices">
-  <button onclick="choose('checkEmail')">Check Email</button>
-  <button onclick="choose('ignoreEmail')">Ignore Email</button>
-</div>
 
 <script>
 let score = 10;
+let sceneIndex = 0;
 
-function updateScene(imgName, leftText, rightText, leftAction, rightAction){
-  document.getElementById("scene").src = imgName;
-  const buttons = document.querySelectorAll("button");
-  buttons[0].innerText = leftText;
-  buttons[1].innerText = rightText;
-  buttons[0].onclick = () => choose(leftAction);
-  buttons[1].onclick = () => choose(rightAction);
+const scene = document.getElementById("scene");
+const scoreText = document.getElementById("score");
+
+function updateScore(){
+  scoreText.innerText = "Score: " + score;
 }
 
-function choose(action){
+// 씬 정의 (네 시나리오 그대로 수학 적용)
+const scenes = [
 
-  if(action === "checkEmail"){
-    score -= 1;
-    updateScene("OnTheSubwaySeat.png",
-      "Check Phone","Do Not Check Phone",
-      "phoneCheck","phoneIgnore");
+  // Scene 0: Subway Entrance
+  {
+    img:"SubwayEntrance.png",
+    left: () => { score -=1; sceneIndex = 1; },   // 이메일 확인
+    right:() => { sceneIndex = 2; }               // 자전거 선택
+  },
+
+  // Scene 1: On Subway Seat
+  {
+    img:"OnTheSubwaySeat.png",
+    left: () => { score -=1; sceneIndex = 4; },   // 폰 확인
+    right:() => { sceneIndex = 4; }               // 폰 안보기
+  },
+
+  // Scene 2: Before Riding Bike → Riding Bike
+  {
+    img:"RidingTheBikeNiceView.png",
+    left: () => { score +=1; sceneIndex = 4; },   // 음악 듣기
+    right:() => { score +=2; sceneIndex = 4; }    // 도시 소리 듣기
+  },
+
+  // Scene 3 (unused placeholder)
+  {},
+
+  // Scene 4: Near Home Street (마지막 선택 전)
+  {
+    img:"NearHomeStreet.png",
+    left: () => { score -=2; sceneIndex = 5; },   // 지금 메시지 확인
+    right:() => { score +=2; sceneIndex = 5; }    // 폰 잠그기
+  },
+
+  // Scene 5: LAST → 엔딩 계산
+  {
+    img:"LAST.png",
+    left:null,
+    right:null
   }
+];
 
-  else if(action === "ignoreEmail"){
-    updateScene("SubwayEntrance.png",
-      "Wait","Bike",
-      "waitSubway","bikeRoute");
-  }
+function renderScene(){
+  const s = scenes[sceneIndex];
+  scene.src = s.img;
+  updateScore();
 
-  else if(action === "phoneCheck"){
-    score -= 1;
-    updateScene("NearHomeStreet.png",
-      "Check Last Message","Lock Phone",
-      "lastCheck","lockPhone");
-  }
-
-  else if(action === "phoneIgnore"){
-    updateScene("NearHomeStreet.png",
-      "Check Last Message","Lock Phone",
-      "lastCheck","lockPhone");
-  }
-
-  else if(action === "waitSubway"){
-    updateScene("OnTheSubwaySeat.png",
-      "Check Phone","Do Not Check Phone",
-      "phoneCheck","phoneIgnore");
-  }
-
-  else if(action === "bikeRoute"){
-    score += 1;
-    updateScene("RidingTheBikeNiceView.png",
-      "Listen to Music","Listen to City",
-      "music","city");
-  }
-
-  else if(action === "music"){
-    score += 1;
-    updateScene("NearHomeStreet.png",
-      "Check Last Message","Lock Phone",
-      "lastCheck","lockPhone");
-  }
-
-  else if(action === "city"){
-    score += 2;
-    updateScene("NearHomeStreet.png",
-      "Check Last Message","Lock Phone",
-      "lastCheck","lockPhone");
-  }
-
-  else if(action === "lastCheck"){
-    score -= 2;
-    ending();
-  }
-
-  else if(action === "lockPhone"){
-    score += 2;
-    ending();
+  // LAST 씬이면 자동 엔딩 계산
+  if(sceneIndex === 5){
+    setTimeout(showEnding, 3000);
   }
 }
 
-function ending(){
-  if(score <= 6){
-    document.getElementById("scene").src = "burnedmale.png";
+function showEnding(){
+  let gender = Math.random() < 0.5 ? "male" : "female";
+
+  if(score >= 12){
+    scene.src = "fresh_" + gender + ".png";
   }
-  else if(score <= 11){
-    document.getElementById("scene").src = "burningmale.png";
+  else if(score >= 7){
+    scene.src = "burning_" + gender + ".png";
   }
   else{
-    document.getElementById("scene").src = "freshmale.png";
+    scene.src = "burned_" + gender + ".png";
   }
-  document.querySelector(".choices").style.display = "none";
+
+  updateScore();
 }
+
+// 화면 터치 좌우 감지
+document.addEventListener("click", function(e){
+  if(sceneIndex === 5) return;
+
+  let x = e.clientX;
+  let mid = window.innerWidth / 2;
+
+  if(x < mid){
+    // 왼쪽 터치
+    scenes[sceneIndex].left();
+  }else{
+    // 오른쪽 터치
+    scenes[sceneIndex].right();
+  }
+
+  renderScene();
+});
+
+// 시작 렌더
+renderScene();
 </script>
 
 </body>
