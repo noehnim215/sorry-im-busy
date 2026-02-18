@@ -1,185 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
 <title>Sorry I'm Busy</title>
-
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-  background: black;
-  font-family: Arial, sans-serif;
+body{
+  margin:0;
+  background:black;
+  color:white;
+  font-family:Helvetica, Arial, sans-serif;
+  text-align:center;
 }
-
-#game {
-  width: 100vw;
-  height: 100vh;
-  background-size: cover;
-  background-position: center;
-  position: relative;
+img{
+  width:100vw;
+  height:100vh;
+  object-fit:cover;
 }
-
-.choice-zone {
-  position: absolute;
-  top: 0;
-  width: 50%;
-  height: 100%;
+.choices{
+  position:absolute;
+  bottom:40px;
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  padding:0 40px;
+  box-sizing:border-box;
 }
-
-#leftZone { left: 0; }
-#rightZone { right: 0; }
-
-#score {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  color: white;
-  font-size: 18px;
-  opacity: 0.8;
+button{
+  background:rgba(0,0,0,0.6);
+  border:2px solid white;
+  color:white;
+  padding:15px 25px;
+  font-size:18px;
+  cursor:pointer;
 }
 </style>
 </head>
-
 <body>
 
-<div id="game">
-  <div id="leftZone" class="choice-zone"></div>
-  <div id="rightZone" class="choice-zone"></div>
-  <div id="score"></div>
+<img id="scene" src="SubwayEntrance.png">
+
+<div class="choices">
+  <button onclick="choose('checkEmail')">Check Email</button>
+  <button onclick="choose('ignoreEmail')">Ignore Email</button>
 </div>
 
 <script>
 let score = 10;
-let scene = "email";
-let route = null;
 
-const game = document.getElementById("game");
-const scoreText = document.getElementById("score");
-
-function updateScore(val){
-  score += val;
-  scoreText.innerText = "Score: " + score;
+function updateScene(imgName, leftText, rightText, leftAction, rightAction){
+  document.getElementById("scene").src = imgName;
+  const buttons = document.querySelectorAll("button");
+  buttons[0].innerText = leftText;
+  buttons[1].innerText = rightText;
+  buttons[0].onclick = () => choose(leftAction);
+  buttons[1].onclick = () => choose(rightAction);
 }
 
-function setScene(img){
-  game.style.backgroundImage = `url("${img}")`;
-}
+function choose(action){
 
-function randomGenderImage(type){
-  const gender = Math.random() < 0.5 ? "male" : "female";
-  return `${type} ${gender}.png`;
+  if(action === "checkEmail"){
+    score -= 1;
+    updateScene("OnTheSubwaySeat.png",
+      "Check Phone","Do Not Check Phone",
+      "phoneCheck","phoneIgnore");
+  }
+
+  else if(action === "ignoreEmail"){
+    updateScene("SubwayEntrance.png",
+      "Wait","Bike",
+      "waitSubway","bikeRoute");
+  }
+
+  else if(action === "phoneCheck"){
+    score -= 1;
+    updateScene("NearHomeStreet.png",
+      "Check Last Message","Lock Phone",
+      "lastCheck","lockPhone");
+  }
+
+  else if(action === "phoneIgnore"){
+    updateScene("NearHomeStreet.png",
+      "Check Last Message","Lock Phone",
+      "lastCheck","lockPhone");
+  }
+
+  else if(action === "waitSubway"){
+    updateScene("OnTheSubwaySeat.png",
+      "Check Phone","Do Not Check Phone",
+      "phoneCheck","phoneIgnore");
+  }
+
+  else if(action === "bikeRoute"){
+    score += 1;
+    updateScene("RidingTheBikeNiceView.png",
+      "Listen to Music","Listen to City",
+      "music","city");
+  }
+
+  else if(action === "music"){
+    score += 1;
+    updateScene("NearHomeStreet.png",
+      "Check Last Message","Lock Phone",
+      "lastCheck","lockPhone");
+  }
+
+  else if(action === "city"){
+    score += 2;
+    updateScene("NearHomeStreet.png",
+      "Check Last Message","Lock Phone",
+      "lastCheck","lockPhone");
+  }
+
+  else if(action === "lastCheck"){
+    score -= 2;
+    ending();
+  }
+
+  else if(action === "lockPhone"){
+    score += 2;
+    ending();
+  }
 }
 
 function ending(){
-  let result;
-
-  if(score >= 12){
-    result = "fresh";
-  } else if(score >= 7){
-    result = "burning";
-  } else {
-    result = "burned";
+  if(score <= 6){
+    document.getElementById("scene").src = "burnedmale.png";
   }
-
-  const finalImg = randomGenderImage(result);
-  setScene(finalImg);
-
-  document.getElementById("leftZone").onclick = null;
-  document.getElementById("rightZone").onclick = null;
-}
-
-function nextScene(choice){
-  switch(scene){
-
-    case "email":
-      updateScore(-1);
-      scene = "streetMessage";
-      setScene("Message on the Street.png");
-      break;
-
-    case "streetMessage":
-      updateScore(-1);
-      scene = "subwayEntrance";
-      setScene("Subway Entrance.png");
-      break;
-
-    case "subwayEntrance":
-      if(choice === "left"){
-        route = "subway";
-        updateScore(0);
-        scene = "subwaySeat";
-        setScene("On the Subway Seat.png");
-      } else {
-        route = "bike";
-        updateScore(+1);
-        scene = "beforeBike";
-        setScene("Before Riding the Bike.png");
-      }
-      break;
-
-    case "subwaySeat":
-      if(choice === "left"){
-        updateScore(-1);
-      } else {
-        updateScore(0);
-      }
-      scene = "nearHome";
-      setScene("Near Home Street.png");
-      break;
-
-    case "beforeBike":
-      scene = "bikeRide";
-      setScene("Riding the Bike, Nice View.png");
-      break;
-
-    case "bikeRide":
-      if(choice === "left"){
-        updateScore(+1);
-      } else {
-        updateScore(+2);
-      }
-      scene = "nearHome";
-      setScene("Near Home Street.png");
-      break;
-
-    case "nearHome":
-      if(choice === "left"){
-        updateScore(-1);
-      } else {
-        updateScore(+1);
-      }
-      scene = "junior";
-      setScene("Junior Coworker.png");
-      break;
-
-    case "junior":
-      if(choice === "left"){
-        updateScore(-2);
-      } else {
-        updateScore(0);
-      }
-      scene = "frontHome";
-      setScene("In Front of Your Home.png");
-      break;
-
-    case "frontHome":
-      if(choice === "left"){
-        updateScore(-2);
-      } else {
-        updateScore(+2);
-      }
-      ending();
-      break;
+  else if(score <= 11){
+    document.getElementById("scene").src = "burningmale.png";
   }
+  else{
+    document.getElementById("scene").src = "freshmale.png";
+  }
+  document.querySelector(".choices").style.display = "none";
 }
-
-document.getElementById("leftZone").onclick = () => nextScene("left");
-document.getElementById("rightZone").onclick = () => nextScene("right");
-
-updateScore(0);
-setScene("Email Before Leaving Work.png");
 </script>
 
 </body>
