@@ -33,144 +33,154 @@ body {
 
 #score {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 20px;
+  left: 20px;
   color: white;
-  font-size: 16px;
-  opacity: 0.7;
+  font-size: 18px;
+  opacity: 0.8;
 }
 </style>
 </head>
 
 <body>
+
 <div id="game">
-  <div id="score"></div>
   <div id="leftZone" class="choice-zone"></div>
   <div id="rightZone" class="choice-zone"></div>
+  <div id="score"></div>
 </div>
 
 <script>
 let score = 10;
-let scene = 0;
+let scene = "email";
 let route = null;
 
 const game = document.getElementById("game");
 const scoreText = document.getElementById("score");
 
-function updateScore() {
+function updateScore(val){
+  score += val;
   scoreText.innerText = "Score: " + score;
 }
 
-function setScene(img) {
+function setScene(img){
   game.style.backgroundImage = `url("${img}")`;
 }
 
-function nextScene(choice) {
-  // Scene 0 — Email
-  if(scene === 0){
-    score -= 1; // 이메일 확인 = -1
-    scene = 1;
-    setScene("Message on the Street.png");
-  }
-
-  // Scene 1 — Coworker message
-  else if(scene === 1){
-    score -= 1; // 바로 답장 or 미루기 = 둘 다 -1
-    scene = 2;
-    setScene("Subway Entrance.png");
-  }
-
-  // Scene 2 — Wait subway or bike
-  else if(scene === 2){
-    if(choice === "right"){
-      score += 1; // 자전거 +1
-      route = "bike";
-      scene = 3;
-      setScene("Before Riding the Bike.png");
-    }else{
-      route = "subway";
-      scene = 3;
-      setScene("On the Subway Seat.png");
-    }
-  }
-
-  // Scene 3A — Subway Seat
-  else if(scene === 3 && route === "subway"){
-    if(choice === "left"){
-      score -= 1; // 폰 확인 -1
-    }
-    scene = 5;
-    setScene("Near Home Street.png");
-  }
-
-  // Scene 3B — Before Riding Bike
-  else if(scene === 3 && route === "bike"){
-    scene = 4;
-    setScene("Riding the Bike, Nice View.png");
-  }
-
-  // Scene 4 — Bike sound choice
-  else if(scene === 4){
-    if(choice === "left"){
-      score += 1; // 노래 듣기 +1
-    }else{
-      score += 2; // 도심 소리 +2
-    }
-    scene = 6;
-    setScene("Junior Coworker.png");
-  }
-
-  // Scene 5 — Near Home (subway route)
-  else if(scene === 5){
-    scene = 6;
-    setScene("Junior Coworker.png");
-  }
-
-  // Scene 6 — Junior coworker question
-  else if(scene === 6){
-    if(choice === "left"){
-      score -= 2; // "나 괜찮아..."
-    }
-    scene = 7;
-    setScene("In Front of Your Home.png");
-  }
-
-  // Scene 7 — Final phone check
-  else if(scene === 7){
-    if(choice === "left"){
-      score -= 2; // 지금 확인
-    }else{
-      score += 2; // 폰 잠그기
-    }
-    scene = 8;
-    ending();
-  }
-
-  updateScore();
+function randomGenderImage(type){
+  const gender = Math.random() < 0.5 ? "male" : "female";
+  return `${type} ${gender}.png`;
 }
 
 function ending(){
-  let gender = Math.random() < 0.5 ? "male" : "female";
+  let result;
 
-  setTimeout(()=>{
-    if(score <= 6){
-      setScene(`burned ${gender}.png`);
-    }
-    else if(score <= 11){
-      setScene(`burning ${gender}.png`);
-    }
-    else{
-      setScene(`fresh ${gender}.png`);
-    }
-  }, 4000);
+  if(score >= 12){
+    result = "fresh";
+  } else if(score >= 7){
+    result = "burning";
+  } else {
+    result = "burned";
+  }
+
+  const finalImg = randomGenderImage(result);
+  setScene(finalImg);
+
+  document.getElementById("leftZone").onclick = null;
+  document.getElementById("rightZone").onclick = null;
+}
+
+function nextScene(choice){
+  switch(scene){
+
+    case "email":
+      updateScore(-1);
+      scene = "streetMessage";
+      setScene("Message on the Street.png");
+      break;
+
+    case "streetMessage":
+      updateScore(-1);
+      scene = "subwayEntrance";
+      setScene("Subway Entrance.png");
+      break;
+
+    case "subwayEntrance":
+      if(choice === "left"){
+        route = "subway";
+        updateScore(0);
+        scene = "subwaySeat";
+        setScene("On the Subway Seat.png");
+      } else {
+        route = "bike";
+        updateScore(+1);
+        scene = "beforeBike";
+        setScene("Before Riding the Bike.png");
+      }
+      break;
+
+    case "subwaySeat":
+      if(choice === "left"){
+        updateScore(-1);
+      } else {
+        updateScore(0);
+      }
+      scene = "nearHome";
+      setScene("Near Home Street.png");
+      break;
+
+    case "beforeBike":
+      scene = "bikeRide";
+      setScene("Riding the Bike, Nice View.png");
+      break;
+
+    case "bikeRide":
+      if(choice === "left"){
+        updateScore(+1);
+      } else {
+        updateScore(+2);
+      }
+      scene = "nearHome";
+      setScene("Near Home Street.png");
+      break;
+
+    case "nearHome":
+      if(choice === "left"){
+        updateScore(-1);
+      } else {
+        updateScore(+1);
+      }
+      scene = "junior";
+      setScene("Junior Coworker.png");
+      break;
+
+    case "junior":
+      if(choice === "left"){
+        updateScore(-2);
+      } else {
+        updateScore(0);
+      }
+      scene = "frontHome";
+      setScene("In Front of Your Home.png");
+      break;
+
+    case "frontHome":
+      if(choice === "left"){
+        updateScore(-2);
+      } else {
+        updateScore(+2);
+      }
+      ending();
+      break;
+  }
 }
 
 document.getElementById("leftZone").onclick = () => nextScene("left");
 document.getElementById("rightZone").onclick = () => nextScene("right");
 
-// 시작
+updateScore(0);
 setScene("Email Before Leaving Work.png");
-updateScore();
 </script>
+
 </body>
 </html>
