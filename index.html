@@ -39,99 +39,138 @@ body {
   font-size: 16px;
   opacity: 0.7;
 }
-
-#loading {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 20px;
-  display: none;
-}
 </style>
 </head>
 
 <body>
-
 <div id="game">
-  <div id="score">Score: 2</div>
-  <div id="loading">calculating...</div>
+  <div id="score"></div>
   <div id="leftZone" class="choice-zone"></div>
   <div id="rightZone" class="choice-zone"></div>
 </div>
 
 <script>
-let score = 2;
-let currentScene = 0;
-
-const scenes = [
-  "images/Email Before Leaving Work.png",
-  "images/Message on the Street.png",
-  "images/Subway Entrance.png",
-  "images/On the Subway Seat.png",
-  "images/Before Riding the Bike.png",
-  "images/Riding the Bike, Nice View.png",
-  "images/Junior Coworker.png",
-  "images/Near Home Street.png",
-  "images/In Front of Your Home.png",
-  "images/LAST.png"
-];
+let score = 10;
+let scene = 0;
+let route = null;
 
 const game = document.getElementById("game");
 const scoreText = document.getElementById("score");
-const loading = document.getElementById("loading");
 
-function showScene() {
-  game.style.backgroundImage = `url("${scenes[currentScene]}")`;
-}
-
-function updateScore(delta) {
-  score += delta;
+function updateScore() {
   scoreText.innerText = "Score: " + score;
 }
 
-function nextScene() {
-  currentScene++;
-  if (currentScene >= scenes.length) {
-    showEnding();
-  } else {
-    showScene();
-  }
+function setScene(img) {
+  game.style.backgroundImage = `url("${img}")`;
 }
 
-function showEnding() {
-  loading.style.display = "block";
+function nextScene(choice) {
+  // Scene 0 — Email
+  if(scene === 0){
+    score -= 1; // 이메일 확인 = -1
+    scene = 1;
+    setScene("Message on the Street.png");
+  }
 
-  setTimeout(() => {
-    loading.style.display = "none";
+  // Scene 1 — Coworker message
+  else if(scene === 1){
+    score -= 1; // 바로 답장 or 미루기 = 둘 다 -1
+    scene = 2;
+    setScene("Subway Entrance.png");
+  }
 
-    let endingType = "";
-    if (score <= 6) endingType = "burned";
-    else if (score <= 11) endingType = "burning";
-    else endingType = "fresh";
+  // Scene 2 — Wait subway or bike
+  else if(scene === 2){
+    if(choice === "right"){
+      score += 1; // 자전거 +1
+      route = "bike";
+      scene = 3;
+      setScene("Before Riding the Bike.png");
+    }else{
+      route = "subway";
+      scene = 3;
+      setScene("On the Subway Seat.png");
+    }
+  }
 
-    const gender = Math.random() < 0.5 ? "male" : "female";
-    const endingImage = `images/${endingType} ${gender}.png`;
+  // Scene 3A — Subway Seat
+  else if(scene === 3 && route === "subway"){
+    if(choice === "left"){
+      score -= 1; // 폰 확인 -1
+    }
+    scene = 5;
+    setScene("Near Home Street.png");
+  }
 
-    game.style.backgroundImage = `url("${endingImage}")`;
+  // Scene 3B — Before Riding Bike
+  else if(scene === 3 && route === "bike"){
+    scene = 4;
+    setScene("Riding the Bike, Nice View.png");
+  }
+
+  // Scene 4 — Bike sound choice
+  else if(scene === 4){
+    if(choice === "left"){
+      score += 1; // 노래 듣기 +1
+    }else{
+      score += 2; // 도심 소리 +2
+    }
+    scene = 6;
+    setScene("Junior Coworker.png");
+  }
+
+  // Scene 5 — Near Home (subway route)
+  else if(scene === 5){
+    scene = 6;
+    setScene("Junior Coworker.png");
+  }
+
+  // Scene 6 — Junior coworker question
+  else if(scene === 6){
+    if(choice === "left"){
+      score -= 2; // "나 괜찮아..."
+    }
+    scene = 7;
+    setScene("In Front of Your Home.png");
+  }
+
+  // Scene 7 — Final phone check
+  else if(scene === 7){
+    if(choice === "left"){
+      score -= 2; // 지금 확인
+    }else{
+      score += 2; // 폰 잠그기
+    }
+    scene = 8;
+    ending();
+  }
+
+  updateScore();
+}
+
+function ending(){
+  let gender = Math.random() < 0.5 ? "male" : "female";
+
+  setTimeout(()=>{
+    if(score <= 6){
+      setScene(`burned ${gender}.png`);
+    }
+    else if(score <= 11){
+      setScene(`burning ${gender}.png`);
+    }
+    else{
+      setScene(`fresh ${gender}.png`);
+    }
   }, 4000);
 }
 
-document.getElementById("leftZone").addEventListener("click", () => {
-  const delta = Math.random() < 0.5 ? -1 : +1;
-  updateScore(delta);
-  nextScene();
-});
+document.getElementById("leftZone").onclick = () => nextScene("left");
+document.getElementById("rightZone").onclick = () => nextScene("right");
 
-document.getElementById("rightZone").addEventListener("click", () => {
-  const delta = Math.random() < 0.5 ? -1 : +1;
-  updateScore(delta);
-  nextScene();
-});
-
-showScene();
+// 시작
+setScene("Email Before Leaving Work.png");
+updateScore();
 </script>
-
 </body>
 </html>
