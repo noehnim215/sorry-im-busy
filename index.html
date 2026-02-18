@@ -29,108 +29,118 @@ body{
 <body>
 
 <div id="score">Score: 10</div>
-<img id="scene" src="SubwayEntrance.png">
+<img id="scene" src="EmailBeforeLeavingWork.png">
 
 <script>
 let score = 10;
 let sceneIndex = 0;
 
-const scene = document.getElementById("scene");
 const scoreText = document.getElementById("score");
+const scene = document.getElementById("scene");
 
 function updateScore(){
   scoreText.innerText = "Score: " + score;
 }
 
-// 씬 정의 (네 시나리오 그대로 수학 적용)
-const scenes = [
+// 씬 흐름 정의 (네 시나리오 그대로)
+function nextScene(choice){
 
-  // Scene 0: Subway Entrance
-  {
-    img:"SubwayEntrance.png",
-    left: () => { score -=1; sceneIndex = 1; },   // 이메일 확인
-    right:() => { sceneIndex = 2; }               // 자전거 선택
-  },
+  switch(sceneIndex){
 
-  // Scene 1: On Subway Seat
-  {
-    img:"OnTheSubwaySeat.png",
-    left: () => { score -=1; sceneIndex = 4; },   // 폰 확인
-    right:() => { sceneIndex = 4; }               // 폰 안보기
-  },
+    case 0: // Email Before Leaving Work
+      if(choice==="left") score -=1;
+      sceneIndex = 1;
+      scene.src = "MessageOnTheStreet.png";
+      break;
 
-  // Scene 2: Before Riding Bike → Riding Bike
-  {
-    img:"RidingTheBikeNiceView.png",
-    left: () => { score +=1; sceneIndex = 4; },   // 음악 듣기
-    right:() => { score +=2; sceneIndex = 4; }    // 도시 소리 듣기
-  },
+    case 1: // Message on the Street
+      score -=1; // 둘 다 -1 (답장 or 미루기 모두 점유)
+      sceneIndex = 2;
+      scene.src = "SubwayEntrance.png";
+      break;
 
-  // Scene 3 (unused placeholder)
-  {},
+    case 2: // Subway Entrance
+      if(choice==="right"){
+        score +=1; // bike
+        sceneIndex = 4;
+        scene.src = "BeforeRidingBike.png";
+      }else{
+        sceneIndex = 3;
+        scene.src = "OnTheSubwaySeat.png";
+      }
+      break;
 
-  // Scene 4: Near Home Street (마지막 선택 전)
-  {
-    img:"NearHomeStreet.png",
-    left: () => { score -=2; sceneIndex = 5; },   // 지금 메시지 확인
-    right:() => { score +=2; sceneIndex = 5; }    // 폰 잠그기
-  },
+    case 3: // Subway Seat
+      if(choice==="left") score -=1;
+      sceneIndex = 6;
+      scene.src = "NearHomeStreet.png";
+      break;
 
-  // Scene 5: LAST → 엔딩 계산
-  {
-    img:"LAST.png",
-    left:null,
-    right:null
+    case 4: // Before Riding Bike
+      if(choice==="left") score +=1;
+      if(choice==="right") score +=2;
+      sceneIndex = 5;
+      scene.src = "RidingBikeNiceView.png";
+      break;
+
+    case 5: // Riding Bike Nice View
+      if(choice==="left") score -=1;
+      if(choice==="right") score +=1;
+      sceneIndex = 6;
+      scene.src = "NearHomeStreet.png";
+      break;
+
+    case 6: // Transition (no choice but tap to continue)
+      sceneIndex = 7;
+      scene.src = "JuniorCoworker.png";
+      break;
+
+    case 7: // Junior Coworker
+      if(choice==="left") score -=2;
+      sceneIndex = 8;
+      scene.src = "InFrontOfHome.png";
+      break;
+
+    case 8: // Final Phone Message
+      if(choice==="left") score -=2;
+      if(choice==="right") score +=2;
+      sceneIndex = 9;
+      scene.src = "LAST.png";
+      updateScore();
+      setTimeout(showEnding,3000);
+      break;
   }
-];
 
-function renderScene(){
-  const s = scenes[sceneIndex];
-  scene.src = s.img;
   updateScore();
-
-  // LAST 씬이면 자동 엔딩 계산
-  if(sceneIndex === 5){
-    setTimeout(showEnding, 3000);
-  }
 }
 
 function showEnding(){
-  let gender = Math.random() < 0.5 ? "male" : "female";
+  let gender = Math.random()<0.5 ? "male":"female";
 
-  if(score >= 12){
-    scene.src = "fresh_" + gender + ".png";
+  if(score <=6){
+    scene.src = "burned_" + gender + ".png";
   }
-  else if(score >= 7){
+  else if(score <=11){
     scene.src = "burning_" + gender + ".png";
   }
   else{
-    scene.src = "burned_" + gender + ".png";
+    scene.src = "fresh_" + gender + ".png";
   }
-
-  updateScore();
 }
 
-// 화면 터치 좌우 감지
-document.addEventListener("click", function(e){
-  if(sceneIndex === 5) return;
+// 좌우 터치 감지
+document.addEventListener("click",(e)=>{
+  if(sceneIndex===9) return;
 
-  let x = e.clientX;
-  let mid = window.innerWidth / 2;
-
-  if(x < mid){
-    // 왼쪽 터치
-    scenes[sceneIndex].left();
+  let mid = window.innerWidth/2;
+  if(e.clientX < mid){
+    nextScene("left");
   }else{
-    // 오른쪽 터치
-    scenes[sceneIndex].right();
+    nextScene("right");
   }
-
-  renderScene();
 });
 
-// 시작 렌더
-renderScene();
+updateScore();
 </script>
 
 </body>
