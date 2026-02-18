@@ -1,147 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Sorry I'm Busy</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SorryImBusy</title>
 
 <style>
-body{
-  margin:0;
-  background:black;
-  overflow:hidden;
-  font-family:Helvetica, Arial, sans-serif;
-}
-#scene{
-  width:100vw;
-  height:100vh;
-  object-fit:cover;
-}
-#score{
-  position:absolute;
-  top:20px;
-  left:20px;
-  color:white;
-  font-size:20px;
-}
+  body{
+    margin:0;
+    background:black;
+    overflow:hidden;
+    font-family: Helvetica, Arial, sans-serif;
+  }
+  #scene{
+    width:100vw;
+    height:100vh;
+    object-fit:cover;
+    display:block;
+  }
+  #score{
+    position:absolute;
+    top:18px;
+    left:18px;
+    color:white;
+    font-size:18px;
+    opacity:0.85;
+    user-select:none;
+  }
 </style>
 </head>
 
 <body>
-
 <div id="score">Score: 10</div>
-<img id="scene" src="EmailBeforeLeavingWork.png">
+<img id="scene" src="EmailBeforeLeavingWork.png" alt="scene">
 
 <script>
 let score = 10;
-let sceneIndex = 0;
+let sceneIndex = 0; // 0부터 시작
+let endingTriggered = false;
 
-const scoreText = document.getElementById("score");
 const scene = document.getElementById("scene");
+const scoreBox = document.getElementById("score");
 
-function updateScore(){
-  scoreText.innerText = "Score: " + score;
+function showScore(){
+  scoreBox.textContent = "Score: " + score;
 }
 
-// 씬 흐름 정의 (네 시나리오 그대로)
-function nextScene(choice){
+function setImage(name){
+  scene.src = name;
+}
+
+function randomGender(){
+  return Math.random() < 0.5 ? "Male" : "Female";
+}
+
+// 씬 흐름 (네 시나리오 그대로)
+function handleChoice(side){
+  // side: "left" or "right"
+
+  if(endingTriggered) return;
 
   switch(sceneIndex){
 
-    case 0: // Email Before Leaving Work
-      if(choice==="left") score -=1;
+    // Scene 0 — Email Before Leaving Work
+    case 0:
+      // Left: -1 / Right: 0
+      if(side === "left") score -= 1;
       sceneIndex = 1;
-      scene.src = "MessageOnTheStreet.png";
+      setImage("MessageOnTheStreet.png");
       break;
 
-    case 1: // Message on the Street
-      score -=1; // 둘 다 -1 (답장 or 미루기 모두 점유)
+    // Scene 1 — Message on the Street
+    case 1:
+      // Left: -1 / Right: -1 (둘 다 -1)
+      score -= 1;
       sceneIndex = 2;
-      scene.src = "SubwayEntrance.png";
+      setImage("SubwayEntrance.png");
       break;
 
-    case 2: // Subway Entrance
-      if(choice==="right"){
-        score +=1; // bike
-        sceneIndex = 4;
-        scene.src = "BeforeRidingBike.png";
-      }else{
+    // Scene 2 — Subway Entrance
+    case 2:
+      // Left: wait 0 -> SubwaySeat
+      // Right: bike +1 -> BeforeRidingBike
+      if(side === "left"){
         sceneIndex = 3;
-        scene.src = "OnTheSubwaySeat.png";
+        setImage("OnTheSubwaySeat.png");
+      } else {
+        score += 1;
+        sceneIndex = 4;
+        setImage("BeforeRidingBike.png");
       }
       break;
 
-    case 3: // Subway Seat
-      if(choice==="left") score -=1;
+    // Scene 3A — On the Subway Seat
+    case 3:
+      // Left: check phone -1
+      // Right: not check 0
+      if(side === "left") score -= 1;
+      // 합류
       sceneIndex = 6;
-      scene.src = "NearHomeStreet.png";
+      setImage("NearHomeStreet.png");
       break;
 
-    case 4: // Before Riding Bike
-      if(choice==="left") score +=1;
-      if(choice==="right") score +=2;
+    // Scene 3B — Before Riding the Bike
+    case 4:
+      // Left: music +1
+      // Right: city sounds +2
+      if(side === "left") score += 1;
+      else score += 2;
       sceneIndex = 5;
-      scene.src = "RidingBikeNiceView.png";
+      setImage("RidingBikeNiceView.png");
       break;
 
-    case 5: // Riding Bike Nice View
-      if(choice==="left") score -=1;
-      if(choice==="right") score +=1;
+    // Scene 4B — Riding the Bike, Nice View
+    case 5:
+      // Left: photo -1
+      // Right: keep riding +1
+      if(side === "left") score -= 1;
+      else score += 1;
+      // 합류
       sceneIndex = 6;
-      scene.src = "NearHomeStreet.png";
+      setImage("NearHomeStreet.png");
       break;
 
-    case 6: // Transition (no choice but tap to continue)
+    // Transition — Near Home Street (선택지 없음)
+    case 6:
+      // 어느쪽 터치든 그냥 다음 씬
       sceneIndex = 7;
-      scene.src = "JuniorCoworker.png";
+      setImage("JuniorCoworker.png");
       break;
 
-    case 7: // Junior Coworker
-      if(choice==="left") score -=2;
+    // Scene 5 — Junior Coworker
+    case 7:
+      // Left: “I’m okay…” -2
+      // Right: “I’m okay!” 0
+      if(side === "left") score -= 2;
       sceneIndex = 8;
-      scene.src = "InFrontOfHome.png";
+      setImage("InFrontOfHome.png");
       break;
 
-    case 8: // Final Phone Message
-      if(choice==="left") score -=2;
-      if(choice==="right") score +=2;
+    // Final Scene — In Front of Your Home
+    case 8:
+      // Left: open now -2
+      // Right: lock phone +2
+      if(side === "left") score -= 2;
+      else score += 2;
+
+      // LAST 보여주고 3초 후 결과
       sceneIndex = 9;
-      scene.src = "LAST.png";
-      updateScore();
-      setTimeout(showEnding,3000);
+      setImage("LAST.png");
+      endingTriggered = true;
+      showScore();
+      setTimeout(showEnding, 3000);
       break;
   }
 
-  updateScore();
+  showScore();
 }
 
 function showEnding(){
-  let gender = Math.random()<0.5 ? "male":"female";
+  const g = randomGender();
 
-  if(score <=6){
-    scene.src = "burned_" + gender + ".png";
+  // 결과 구간: 2~6 / 7~11 / 12~17
+  if(score <= 6){
+    setImage("Burned" + g + ".png");
+  } else if(score <= 11){
+    setImage("Burning" + g + ".png");
+  } else {
+    setImage("Fresh" + g + ".png");
   }
-  else if(score <=11){
-    scene.src = "burning_" + gender + ".png";
-  }
-  else{
-    scene.src = "fresh_" + gender + ".png";
-  }
+
+  showScore();
 }
 
-// 좌우 터치 감지
-document.addEventListener("click",(e)=>{
-  if(sceneIndex===9) return;
-
-  let mid = window.innerWidth/2;
-  if(e.clientX < mid){
-    nextScene("left");
-  }else{
-    nextScene("right");
-  }
+// 좌우 클릭/터치 감지
+document.addEventListener("click", (e)=>{
+  const mid = window.innerWidth / 2;
+  if(e.clientX < mid) handleChoice("left");
+  else handleChoice("right");
 });
 
-updateScore();
+showScore();
 </script>
-
 </body>
 </html>
