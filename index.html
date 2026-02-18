@@ -2,22 +2,23 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SorryImBusy</title>
+<title>Sorry I'm Busy</title>
 
 <style>
 body{
   margin:0;
   background:black;
   overflow:hidden;
-  user-select:none;
+  font-family:Helvetica, Arial, sans-serif;
 }
+
 #scene{
   width:100vw;
   height:100vh;
   object-fit:cover;
   display:block;
 }
+
 #score{
   position:absolute;
   top:18px;
@@ -25,29 +26,20 @@ body{
   color:white;
   font-size:18px;
   opacity:0.85;
+  user-select:none;
 }
-.zone{
-  position:absolute;
-  top:0;
-  width:50%;
-  height:100%;
-}
-#left{ left:0; }
-#right{ right:0; }
 </style>
 </head>
 
 <body>
 
 <div id="score">Score: 10</div>
-<img id="scene">
-
-<div id="left" class="zone"></div>
-<div id="right" class="zone"></div>
+<img id="scene" src="">
 
 <script>
 let score = 10;
 let sceneIndex = 0;
+let endingTriggered = false;
 
 const sceneImg = document.getElementById("scene");
 const scoreBox = document.getElementById("score");
@@ -60,73 +52,91 @@ function setImage(name){
   sceneImg.src = name;
 }
 
+// ---------- SCENES ----------
 const scenes = [
 
-  // Scene 0
+  // Scene 0 — Email Before Leaving Work
   {
-    img: "Email Before Leaving Work.png",
-    left: ()=>{ score-=1; next(); },
-    right: ()=>{ score-=1; next(); }
+    img: "EmailBeforeLeavingWork.png",
+    left: ()=>{ score -=1; next(); },   // 오늘 확인
+    right: ()=>{ next(); }              // 내일 확인 (0)
   },
 
-  // Scene 1
+  // Scene 1 — Message on the Street
   {
-    img: "Message on the Street.png",
-    left: ()=>{ score-=1; next(); },
-    right: ()=>{ score-=1; next(); }
+    img: "MessageontheStreet.png",
+    left: ()=>{ score -=1; next(); },   // 바로 답장
+    right: ()=>{ score -=1; next(); }   // 미루기 (-1 점유)
   },
 
-  // Scene 2
+  // Scene 2 — Subway Entrance
   {
-    img: "Subway Entrance.png",
-    left: ()=>{ score+=0; next(); },
-    right: ()=>{ score+=1; next(); }
+    img: "SubwayEntrance.png",
+    left: ()=>{ goSubwayRoute(); },     // 왼쪽 = 지하철
+    right: ()=>{ goBikeRoute(); }       // 오른쪽 = 자전거
   },
 
-  // Scene 3A
+  // Scene 3A — On the Subway Seat
   {
-    img: "On the Subway Seat.png",
-    left: ()=>{ score-=1; goNearHome(); },
-    right: ()=>{ score+=0; goNearHome(); }
+    img: "OntheSubwaySeat.png",
+    left: ()=>{ score -=1; goNearHome(); },   // 폰 확인
+    right: ()=>{ goNearHome(); }              // 폰 안보기
   },
 
-  // Scene 3B
+  // Scene 3B — Before Riding the Bike
   {
-    img: "Before Riding the Bike.png",
-    left: ()=>{ score+=1; next(); },
-    right: ()=>{ score+=2; next(); }
+    img: "BeforeRidingtheBike.png",
+    left: ()=>{ score +=1; next(); },  // 노래 듣기
+    right: ()=>{ score +=2; next(); }  // 도심 소리 듣기
   },
 
-  // Scene 4B
+  // Scene 4B — Riding the Bike, Nice View
   {
-    img: "Riding the Bike, Nice View.png",
-    left: ()=>{ score-=1; goNearHome(); },
-    right: ()=>{ score+=1; goNearHome(); }
+    img: "RidingtheBike,NiceView.png",
+    left: ()=>{ score -=1; goNearHome(); },  // 사진 찍기
+    right: ()=>{ score +=1; goNearHome(); }  // 그냥 지나가기
   },
 
-  // Scene 5
+  // Scene 5 — Junior Coworker
   {
-    img: "Junior Coworker.png",
-    left: ()=>{ score-=2; next(); },
-    right: ()=>{ score+=0; next(); }
+    img: "JuniorCoworker.png",
+    left: ()=>{ score -=2; next(); },  // “나 괜찮아…”
+    right: ()=>{ next(); }             // “나 괜찮아!”
   },
 
-  // Final decision
+  // Final Scene — In Front of Your Home
   {
-    img: "In Front of Your Home.png",
-    left: ()=>{ score-=2; showEnding(); },
-    right: ()=>{ score+=2; showEnding(); }
+    img: "InFrontofYourHome.png",
+    left: ()=>{ score -=2; showEnding(); },  // 지금 확인
+    right: ()=>{ score +=2; showEnding(); }  // 폰 잠그기
   }
 ];
 
+// ---------- FLOW ----------
 function next(){
   sceneIndex++;
   setImage(scenes[sceneIndex].img);
   updateScore();
 }
 
+// 지하철 루트
+function goSubwayRoute(){
+  sceneIndex = 3;
+  setImage(scenes[sceneIndex].img);
+  updateScore();
+}
+
+// 자전거 루트
+function goBikeRoute(){
+  sceneIndex = 4;
+  setImage(scenes[sceneIndex].img);
+  updateScore();
+}
+
+// Near Home 전환
 function goNearHome(){
-  setImage("Near Home Street.png");
+  setImage("NearHomeStreet.png");
+
   setTimeout(()=>{
     sceneIndex = 6;
     setImage(scenes[sceneIndex].img);
@@ -134,30 +144,47 @@ function goNearHome(){
   }, 1200);
 }
 
+// ---------- ENDING ----------
 function showEnding(){
+  if(endingTriggered) return;
+  endingTriggered = true;
+
   setImage("LAST.png");
 
   setTimeout(()=>{
-    let gender = (score % 2 === 0) ? "male" : "female";
+    let gender = Math.random() < 0.5 ? "male" : "female";
     let ending;
 
-    if(score>=2 && score<=6) ending = "burned "+gender+".png";
-    else if(score<=11) ending = "burnin "+gender+".png";
-    else ending = "fresh "+gender+".png";
+    if(score >=2 && score <=6){
+      ending = "burned" + gender + ".png";
+    }
+    else if(score >=7 && score <=11){
+      if(gender === "male"){
+        ending = "burningmale.png";
+      }else{
+        ending = "burninfemale.png";
+      }
+    }
+    else{
+      ending = "fresh" + gender + ".png";
+    }
 
     setImage(ending);
   },1000);
 }
 
-document.getElementById("left").onclick = ()=>{
-  if(sceneIndex===2){ sceneIndex=4; setImage(scenes[4].img); return; }
-  scenes[sceneIndex].left();
-};
-document.getElementById("right").onclick = ()=>{
-  if(sceneIndex===2){ sceneIndex=3; setImage(scenes[3].img); return; }
-  scenes[sceneIndex].right();
-};
+// ---------- TOUCH CONTROL ----------
+document.addEventListener("click", (e)=>{
+  if(endingTriggered) return;
 
+  if(e.clientX < window.innerWidth/2){
+    scenes[sceneIndex].left();
+  }else{
+    scenes[sceneIndex].right();
+  }
+});
+
+// ---------- START ----------
 setImage(scenes[0].img);
 updateScore();
 </script>
