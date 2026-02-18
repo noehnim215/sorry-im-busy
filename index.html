@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sorry I'm Busy</title>
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:black;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  text-align:center;
+}
+.box {
+  max-width:600px;
+}
+button {
+  margin:10px;
+  padding:12px 24px;
+  font-size:16px;
+  border:none;
+  background:white;
+  color:black;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h1 id="scene">You just left the office.</h1>
+  <p id="text">Your phone keeps buzzing.</p>
+
+  <div id="choices">
+    <button onclick="choice('reply')">Reply to messages</button>
+    <button onclick="choice('ignore')">Ignore and keep walking</button>
+  </div>
+</div>
+
+<script>
+let stress = 0;
+
+function choice(type){
+  if(type === 'reply'){
+    stress += 1;
+    nextScene("You stopped to reply.", "More messages keep coming.");
+  } else {
+    stress -= 1;
+    nextScene("You kept walking.", "The city noise feels quieter.");
+  }
+}
+
+function nextScene(title, desc){
+  document.getElementById("scene").innerText = title;
+  document.getElementById("text").innerText = desc;
+
+  document.getElementById("choices").innerHTML = `
+    <button onclick="ending()">Continue walking</button>
+  `;
+}
+
+function ending(){
+  if(stress >= 1){
+    document.getElementById("scene").innerText = "ENDING: BURNING";
+    document.getElementById("text").innerText = "You never really rested.";
+  } else {
+    document.getElementById("scene").innerText = "ENDING: NOT BURNED";
+    document.getElementById("text").innerText = "You finally gave yourself space.";
+  }
+  document.getElementById("choices").innerHTML = "";
+}
+</script>
+</body>
+</html>
