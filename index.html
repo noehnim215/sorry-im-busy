@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sorry I'm Busy</title>
 
 <style>
@@ -21,7 +21,6 @@ body {
   position: relative;
 }
 
-/* 좌우 선택 영역 */
 .choice-zone {
   position: absolute;
   top: 0;
@@ -32,7 +31,6 @@ body {
 #leftZone { left: 0; }
 #rightZone { right: 0; }
 
-/* 디버그 점수 (나중에 지워도 됨) */
 #score {
   position: absolute;
   top: 10px;
@@ -41,110 +39,97 @@ body {
   font-size: 16px;
   opacity: 0.7;
 }
+
+#loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 20px;
+  display: none;
+}
 </style>
 </head>
 
 <body>
 
 <div id="game">
+  <div id="score">Score: 2</div>
+  <div id="loading">calculating...</div>
   <div id="leftZone" class="choice-zone"></div>
   <div id="rightZone" class="choice-zone"></div>
-  <div id="score"></div>
 </div>
 
 <script>
-/* ===============================
-   🎬 이미지 순서 (루트 경로)
-================================ */
+let score = 2;
+let currentScene = 0;
+
 const scenes = [
-  "Email Before Leaving Work.png",
-  "Message on the Street.png",
-  "Subway Entrance.png",
-  "On the Subway Seat.png",
-  "Before Riding the Bike.png",
-  "Riding the Bike, Nice View.png",
-  "Junior Coworker.png",
-  "Near Home Street.png",
-  "In Front of Your Home.png",
-  "LAST.png"
+  "images/Email Before Leaving Work.png",
+  "images/Message on the Street.png",
+  "images/Subway Entrance.png",
+  "images/On the Subway Seat.png",
+  "images/Before Riding the Bike.png",
+  "images/Riding the Bike, Nice View.png",
+  "images/Junior Coworker.png",
+  "images/Near Home Street.png",
+  "images/In Front of Your Home.png",
+  "images/LAST.png"
 ];
 
-/* ===============================
-   🧠 점수 시스템
-================================ */
-let currentScene = 0;
-let score = 0;
-let randomGender = Math.random() < 0.5 ? "male" : "female";
-
-/* ===============================
-   🎥 장면 표시
-================================ */
 const game = document.getElementById("game");
 const scoreText = document.getElementById("score");
+const loading = document.getElementById("loading");
 
 function showScene() {
-  if (currentScene >= scenes.length) {
-    calculateEnding();
-    return;
-  }
-
   game.style.backgroundImage = `url("${scenes[currentScene]}")`;
-  scoreText.textContent = "Score: " + score;
 }
 
-/* ===============================
-   🖱 선택 처리
-================================ */
-document.getElementById("leftZone").onclick = () => {
-  score += 1; // 사람 선택
-  nextScene();
-};
-
-document.getElementById("rightZone").onclick = () => {
-  score -= 1; // 일 선택
-  nextScene();
-};
+function updateScore(delta) {
+  score += delta;
+  scoreText.innerText = "Score: " + score;
+}
 
 function nextScene() {
   currentScene++;
-  showScene();
-}
-
-/* ===============================
-   🔥 엔딩 계산 (3~5초 생각 연출)
-================================ */
-function calculateEnding() {
-  scoreText.textContent = "Calculating...";
-  
-  setTimeout(() => {
+  if (currentScene >= scenes.length) {
     showEnding();
-  }, 3000); // 3초 계산 연출
-}
-
-/* ===============================
-   🧾 엔딩 분기
-================================ */
-function showEnding() {
-  let endingImage = "";
-
-  if (score >= 3) {
-    // fresh
-    endingImage = randomGender === "male" ? "fresh male.png" : "fresh_female.png";
-  } 
-  else if (score >= 0) {
-    // burning
-    endingImage = randomGender === "male" ? "burning male.png" : "burnin female.png";
-  } 
-  else {
-    // burned
-    endingImage = randomGender === "male" ? "burned male.png" : "burned female.png";
+  } else {
+    showScene();
   }
-
-  game.style.backgroundImage = `url("${endingImage}")`;
-  scoreText.textContent = "";
 }
 
-/* 시작 */
+function showEnding() {
+  loading.style.display = "block";
+
+  setTimeout(() => {
+    loading.style.display = "none";
+
+    let endingType = "";
+    if (score <= 6) endingType = "burned";
+    else if (score <= 11) endingType = "burning";
+    else endingType = "fresh";
+
+    const gender = Math.random() < 0.5 ? "male" : "female";
+    const endingImage = `images/${endingType} ${gender}.png`;
+
+    game.style.backgroundImage = `url("${endingImage}")`;
+  }, 4000);
+}
+
+document.getElementById("leftZone").addEventListener("click", () => {
+  const delta = Math.random() < 0.5 ? -1 : +1;
+  updateScore(delta);
+  nextScene();
+});
+
+document.getElementById("rightZone").addEventListener("click", () => {
+  const delta = Math.random() < 0.5 ? -1 : +1;
+  updateScore(delta);
+  nextScene();
+});
+
 showScene();
 </script>
 
