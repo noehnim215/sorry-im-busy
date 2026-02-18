@@ -1,78 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sorry I'm Busy</title>
+
 <style>
-body {
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:black;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  height:100vh;
-  text-align:center;
-}
-.box {
-  max-width:600px;
-}
-button {
-  margin:10px;
-  padding:12px 24px;
-  font-size:16px;
-  border:none;
-  background:white;
-  color:black;
-  cursor:pointer;
-}
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    font-family: Arial, sans-serif;
+  }
+
+  #game {
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+
+  /* 좌우 터치 영역 */
+  .choice-zone {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+  }
+
+  #leftZone { left: 0; }
+  #rightZone { right: 0; }
+
+  /* 디버그용 점수 표시 (나중에 지워도 됨) */
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-size: 16px;
+    opacity: 0.7;
+  }
 </style>
 </head>
-
 <body>
-<div class="box">
-  <h1 id="scene">You just left the office.</h1>
-  <p id="text">Your phone keeps buzzing.</p>
 
-  <div id="choices">
-    <button onclick="choice('reply')">Reply to messages</button>
-    <button onclick="choice('ignore')">Ignore and keep walking</button>
-  </div>
+<div id="game">
+  <div id="score">Score: 2</div>
+  <div id="leftZone" class="choice-zone"></div>
+  <div id="rightZone" class="choice-zone"></div>
 </div>
 
 <script>
-let stress = 0;
+let score = 2;
+let scene = 0;
 
-function choice(type){
-  if(type === 'reply'){
-    stress += 1;
-    nextScene("You stopped to reply.", "More messages keep coming.");
-  } else {
-    stress -= 1;
-    nextScene("You kept walking.", "The city noise feels quieter.");
+const game = document.getElementById("game");
+const scoreText = document.getElementById("score");
+
+function updateScore(val) {
+  score += val;
+  scoreText.innerText = "Score: " + score;
+}
+
+function showScene() {
+  switch(scene) {
+
+    // Scene 0 — Email
+    case 0:
+      game.style.backgroundImage = "url('images/Email Before Leaving Work.png')";
+      break;
+
+    // Scene 1 — Street message
+    case 1:
+      game.style.backgroundImage = "url('images/Message on the Street.png')";
+      break;
+
+    // Scene 2 — Subway entrance
+    case 2:
+      game.style.backgroundImage = "url('images/Subway Entrance.png')";
+      break;
+
+    // Scene 3A — On subway seat
+    case 3:
+      game.style.backgroundImage = "url('images/On the Subway Seat.png')";
+      break;
+
+    // Scene 3B — Before riding bike
+    case 4:
+      game.style.backgroundImage = "url('images/Before Riding the Bike.png')";
+      break;
+
+    // Scene 4 — Riding bike nice view
+    case 5:
+      game.style.backgroundImage = "url('images/Riding the Bike, Nice View.png')";
+      break;
+
+    // Scene 5 — Junior coworker
+    case 6:
+      game.style.backgroundImage = "url('images/Junior Coworker.png')";
+      break;
+
+    // Scene 6 — Near home street (transition)
+    case 7:
+      game.style.backgroundImage = "url('images/Near Home Street.png')";
+      break;
+
+    // Scene 7 — In front of home
+    case 8:
+      game.style.backgroundImage = "url('images/In Front of Your Home.png')";
+      break;
+
+    // End trigger
+    case 9:
+      endGame();
+      break;
   }
 }
 
-function nextScene(title, desc){
-  document.getElementById("scene").innerText = title;
-  document.getElementById("text").innerText = desc;
-
-  document.getElementById("choices").innerHTML = `
-    <button onclick="ending()">Continue walking</button>
-  `;
+function nextScene() {
+  scene++;
+  showScene();
 }
 
-function ending(){
-  if(stress >= 1){
-    document.getElementById("scene").innerText = "ENDING: BURNING";
-    document.getElementById("text").innerText = "You never really rested.";
-  } else {
-    document.getElementById("scene").innerText = "ENDING: NOT BURNED";
-    document.getElementById("text").innerText = "You finally gave yourself space.";
+document.getElementById("leftZone").addEventListener("click", () => handleChoice("left"));
+document.getElementById("rightZone").addEventListener("click", () => handleChoice("right"));
+
+function handleChoice(side) {
+
+  switch(scene) {
+
+    // Scene 0 — Email
+    case 0:
+      if (side === "left") updateScore(-1);  // check tonight = burn
+      else updateScore(+1); // check tomorrow = recover
+      break;
+
+    // Scene 1 — Street message
+    case 1:
+      if (side === "left") updateScore(+1);  // reply now
+      else updateScore(-1); // read later (burn)
+      break;
+
+    // Scene 2 — Subway entrance
+    case 2:
+      if (side === "left") {
+        // wait subway (no change)
+      } else {
+        updateScore(+1); // take bike = fresh
+        scene = 3; // skip to bike path
+      }
+      break;
+
+    // Scene 3 — Subway seat
+    case 3:
+      if (side === "left") updateScore(-1); // check phone (burn)
+      else updateScore(0); // do nothing
+      break;
+
+    // Scene 4 — Before riding bike
+    case 4:
+      if (side === "left") updateScore(+1); // listen music
+      else updateScore(+2); // city sounds
+      break;
+
+    // Scene 5 — Bike nice view
+    case 5:
+      if (side === "left") updateScore(+1); // take photo
+      else updateScore(0); // keep riding
+      break;
+
+    // Scene 6 — Junior coworker
+    case 6:
+      if (side === "left") updateScore(0); // "I'm fine."
+      else updateScore(+1); // admit it's hard
+      break;
+
+    // Scene 7 — Near home street
+    case 7:
+      // just transition scene, no score
+      break;
+
+    // Scene 8 — In front of home
+    case 8:
+      if (side === "left") updateScore(-1); // check work messages
+      else updateScore(+1); // ignore and go inside
+      break;
   }
-  document.getElementById("choices").innerHTML = "";
+
+  nextScene();
 }
+
+function endGame() {
+  // 로딩 이미지
+  game.style.backgroundImage = "url('images/LAST.png')";
+
+  setTimeout(() => {
+    let endingType;
+
+    if (score <= 6) endingType = "burned";
+    else if (score <= 11) endingType = "burning";
+    else endingType = "fresh";
+
+    const gender = Math.random() < 0.5 ? "male" : "female";
+    const finalImage = `images/${endingType} ${gender}.png`;
+
+    game.style.backgroundImage = `url('${finalImage}')`;
+
+  }, 4000);
+}
+
+// 시작
+showScene();
 </script>
+
 </body>
 </html>
