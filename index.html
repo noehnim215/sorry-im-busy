@@ -1,186 +1,166 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SorryImBusy</title>
 
 <style>
-  body{
-    margin:0;
-    background:black;
-    overflow:hidden;
-    font-family: Helvetica, Arial, sans-serif;
-  }
-  #scene{
-    width:100vw;
-    height:100vh;
-    object-fit:cover;
-    display:block;
-  }
-  #score{
-    position:absolute;
-    top:18px;
-    left:18px;
-    color:white;
-    font-size:18px;
-    opacity:0.85;
-    user-select:none;
-  }
+body{
+  margin:0;
+  background:black;
+  overflow:hidden;
+  user-select:none;
+}
+#scene{
+  width:100vw;
+  height:100vh;
+  object-fit:cover;
+  display:block;
+}
+#score{
+  position:absolute;
+  top:18px;
+  left:18px;
+  color:white;
+  font-size:18px;
+  opacity:0.85;
+}
+.zone{
+  position:absolute;
+  top:0;
+  width:50%;
+  height:100%;
+}
+#left{ left:0; }
+#right{ right:0; }
 </style>
 </head>
 
 <body>
+
 <div id="score">Score: 10</div>
-<img id="scene" src="EmailBeforeLeavingWork.png" alt="scene">
+<img id="scene">
+
+<div id="left" class="zone"></div>
+<div id="right" class="zone"></div>
 
 <script>
 let score = 10;
-let sceneIndex = 0; // 0부터 시작
-let endingTriggered = false;
+let sceneIndex = 0;
 
-const scene = document.getElementById("scene");
+const sceneImg = document.getElementById("scene");
 const scoreBox = document.getElementById("score");
 
-function showScore(){
+function updateScore(){
   scoreBox.textContent = "Score: " + score;
 }
 
 function setImage(name){
-  scene.src = name;
+  sceneImg.src = name;
 }
 
-function randomGender(){
-  return Math.random() < 0.5 ? "Male" : "Female";
-}
+const scenes = [
 
-// 씬 흐름 (네 시나리오 그대로)
-function handleChoice(side){
-  // side: "left" or "right"
+  // Scene 0
+  {
+    img: "Email Before Leaving Work.png",
+    left: ()=>{ score-=1; next(); },
+    right: ()=>{ score-=1; next(); }
+  },
 
-  if(endingTriggered) return;
+  // Scene 1
+  {
+    img: "Message on the Street.png",
+    left: ()=>{ score-=1; next(); },
+    right: ()=>{ score-=1; next(); }
+  },
 
-  switch(sceneIndex){
+  // Scene 2
+  {
+    img: "Subway Entrance.png",
+    left: ()=>{ score+=0; next(); },
+    right: ()=>{ score+=1; next(); }
+  },
 
-    // Scene 0 — Email Before Leaving Work
-    case 0:
-      // Left: -1 / Right: 0
-      if(side === "left") score -= 1;
-      sceneIndex = 1;
-      setImage("MessageontheStreet.png");
-      break;
+  // Scene 3A
+  {
+    img: "On the Subway Seat.png",
+    left: ()=>{ score-=1; goNearHome(); },
+    right: ()=>{ score+=0; goNearHome(); }
+  },
 
-    // Scene 1 — Message on the Street
-    case 1:
-      // Left: -1 / Right: -1 (둘 다 -1)
-      score -= 1;
-      sceneIndex = 2;
-      setImage("SubwayEntrance.png");
-      break;
+  // Scene 3B
+  {
+    img: "Before Riding the Bike.png",
+    left: ()=>{ score+=1; next(); },
+    right: ()=>{ score+=2; next(); }
+  },
 
-    // Scene 2 — Subway Entrance
-    case 2:
-      // Left: wait 0 -> SubwaySeat
-      // Right: bike +1 -> BeforeRidingBike
-      if(side === "left"){
-        sceneIndex = 3;
-        setImage("OntheSubwaySeat.png");
-      } else {
-        score += 1;
-        sceneIndex = 4;
-        setImage("BeforeRidingtheBike.png");
-      }
-      break;
+  // Scene 4B
+  {
+    img: "Riding the Bike, Nice View.png",
+    left: ()=>{ score-=1; goNearHome(); },
+    right: ()=>{ score+=1; goNearHome(); }
+  },
 
-    // Scene 3A — On the Subway Seat
-    case 3:
-      // Left: check phone -1
-      // Right: not check 0
-      if(side === "left") score -= 1;
-      // 합류
-      sceneIndex = 6;
-      setImage("NearHomeStreet.png");
-      break;
+  // Scene 5
+  {
+    img: "Junior Coworker.png",
+    left: ()=>{ score-=2; next(); },
+    right: ()=>{ score+=0; next(); }
+  },
 
-    // Scene 3B — Before Riding the Bike
-    case 4:
-      // Left: music +1
-      // Right: city sounds +2
-      if(side === "left") score += 1;
-      else score += 2;
-      sceneIndex = 5;
-      setImage("RidingtheBike,NiceView.png");
-      break;
-
-    // Scene 4B — Riding the Bike, Nice View
-    case 5:
-      // Left: photo -1
-      // Right: keep riding +1
-      if(side === "left") score -= 1;
-      else score += 1;
-      // 합류
-      sceneIndex = 6;
-      setImage("NearHomeStreet.png");
-      break;
-
-    // Transition — Near Home Street (선택지 없음)
-    case 6:
-      // 어느쪽 터치든 그냥 다음 씬
-      sceneIndex = 7;
-      setImage("JuniorCoworker.png");
-      break;
-
-    // Scene 5 — Junior Coworker
-    case 7:
-      // Left: “I’m okay…” -2
-      // Right: “I’m okay!” 0
-      if(side === "left") score -= 2;
-      sceneIndex = 8;
-      setImage("InFrontofHome.png");
-      break;
-
-    // Final Scene — In Front of Your Home
-    case 8:
-      // Left: open now -2
-      // Right: lock phone +2
-      if(side === "left") score -= 2;
-      else score += 2;
-
-      // LAST 보여주고 3초 후 결과
-      sceneIndex = 9;
-      setImage("LAST.png");
-      endingTriggered = true;
-      showScore();
-      setTimeout(showEnding, 3000);
-      break;
+  // Final decision
+  {
+    img: "In Front of Your Home.png",
+    left: ()=>{ score-=2; showEnding(); },
+    right: ()=>{ score+=2; showEnding(); }
   }
+];
 
-  showScore();
+function next(){
+  sceneIndex++;
+  setImage(scenes[sceneIndex].img);
+  updateScore();
+}
+
+function goNearHome(){
+  setImage("Near Home Street.png");
+  setTimeout(()=>{
+    sceneIndex = 6;
+    setImage(scenes[sceneIndex].img);
+    updateScore();
+  }, 1200);
 }
 
 function showEnding(){
-  const g = randomGender();
+  setImage("LAST.png");
 
-  // 결과 구간: 2~6 / 7~11 / 12~17
-  if(score <= 6){
-    setImage("Burned" + g + ".png");
-  } else if(score <= 11){
-    setImage("Burning" + g + ".png");
-  } else {
-    setImage("Fresh" + g + ".png");
-  }
+  setTimeout(()=>{
+    let gender = (score % 2 === 0) ? "male" : "female";
+    let ending;
 
-  showScore();
+    if(score>=2 && score<=6) ending = "burned "+gender+".png";
+    else if(score<=11) ending = "burnin "+gender+".png";
+    else ending = "fresh "+gender+".png";
+
+    setImage(ending);
+  },1000);
 }
 
-// 좌우 클릭/터치 감지
-document.addEventListener("click", (e)=>{
-  const mid = window.innerWidth / 2;
-  if(e.clientX < mid) handleChoice("left");
-  else handleChoice("right");
-});
+document.getElementById("left").onclick = ()=>{
+  if(sceneIndex===2){ sceneIndex=4; setImage(scenes[4].img); return; }
+  scenes[sceneIndex].left();
+};
+document.getElementById("right").onclick = ()=>{
+  if(sceneIndex===2){ sceneIndex=3; setImage(scenes[3].img); return; }
+  scenes[sceneIndex].right();
+};
 
-showScore();
+setImage(scenes[0].img);
+updateScore();
 </script>
+
 </body>
 </html>
